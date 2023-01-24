@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <title>Infame Pong: Partida</title>
+    <style>
+        #canvas {
+            width: 600px;
+            height: 380px;
+            border: 2px solid black;
+        }
+
+        #resumen {
+            font-family: monospace;
+            font-size: x-large;
+        }
+
+        .versus {
+            color: red;
+            font-size: xxx-large
+        }
+    </style>
+</head>
+
+<body>
+    <div id="resumen"></div>
+    <canvas id="canvas" width="600" height="380"></canvas>
+</body>
+<script type="text/javascript">
+    const PARTIDA = "##########"
+    let PRINCIPAL = false
+    let ACTIVO = false
+
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext("2d");
+
+    function pintarResultados(puntuacion1, puntuacion2) {
+        document.querySelector("#resumen").innerHTML = `<span class="resultado">${puntuacion1}</span> <span class="versus">VS</span> <span class="resultado">${puntuacion2}</span>`
+    }
+
+    function pintarCanvas(jugador1, jugador2, pelota) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+        // Pintar JUGADOR 1: x, y, ancho, alto
+        ctx.beginPath();
+        ctx.rect(jugador1[0], jugador1[1], jugador1[2], jugador1[3]);
+        ctx.fillStyle = "#2E2EFE";
+        ctx.fill();
+        ctx.closePath();
+
+        // PINTAR JUGADOR 2
+        ctx.beginPath();
+        ctx.rect(jugador2[0], jugador2[1], jugador2[2], jugador2[3]);
+        ctx.fillStyle = "#088A08";
+        ctx.fill();
+        ctx.closePath();
+
+        ctx.beginPath();
+        ctx.arc(pelota[0], pelota[1], 10, 0, 2 * Math.PI);
+        ctx.fillStyle = "#FF0000";
+        ctx.fill();
+        ctx.stroke();
+        ctx.closePath();
+    }
+
+
+    document.addEventListener("DOMContentLoaded", () => {
+        socket = new WebSocket("ws://" + document.location.host + "/ws?partida=" + PARTIDA);
+
+        socket.onopen = () => {
+            console.log("conexión establecida")
+        };
+        socket.onclose = () => {
+            console.log("conexión cerrada")
+        };
+        socket.onmessage = (evento) => {
+            const respuesta = JSON.parse(evento.data)
+            console.log(respuesta)
+
+            if (respuesta.mensaje == "primer jugador") {
+                PRINCIPAL = true
+                document.querySelector("#resumen").innerHTML = `¡Hola! Por favor, espera a que se conecte un rival... Puede hacerlo a través de esta URL: ${document.URL}`
+            }
+
+            if (respuesta.mensaje == "ganador") {
+                document.querySelector("#resumen").innerHTML = `¡Enhorabuena! Has ganado tras el abandono del rival`
+            }
+
+            if (respuesta.mensaje == "segundo jugador") {
+                ACTIVO = true
+                if (PRINCIPAL) {
+                    socket.send("iniciar")
+                }
+            }
+
+            if (respuesta.mensaje == "jugar") {
+                let jugador1X = respuesta.partida.jugadores[0].x
+                let jugador1Y = respuesta.partida.jugadores[0].y
+                let jugador1Ancho = respuesta.partida.jugadores[0].ancho
+                let jugador1Alto = respuesta.partida.jugadores[0].alto
+                let jugador1Puntos = respuesta.partida.jugadores[0].puntos
+
+                let jugador2X = respuesta.partida.jugadores[1].x
+                let jugador2Y = respuesta.partida.jugadores[1].y
+                let jugador2Ancho = respuesta.partida.jugadores[1].ancho
+                let jugador2Alto = respuesta.partida.jugadores[1].alto
+                let jugador2Puntos = respuesta.partida.jugadores[1].puntos
+
+
+                let pelotaX = respuesta.partida.pelota.x
+                let pelotaY = respuesta.partida.pelota.y
+
+                pintarCanvas(
+                    [jugador1X, jugador1Y, jugador1Ancho, jugador1Alto],
+                    [jugador2X, jugador2Y, jugador2Ancho, jugador2Alto],
+                    [pelotaX, pelotaY])
+
+                pintarResultados(jugador1Puntos, jugador2Puntos)
+            }
+        };
+    })
+
+
+    window.addEventListener('keydown', function (e) {
+        if (e.key == "ArrowUp") {
+            if (ACTIVO) {
+                socket.send("arriba")
+            }
+        }
+        if (e.key == "ArrowDown") {
+            if (ACTIVO) {
+                socket.send("abajo")
+            }
+        }
+    }, false);
+
+</script>
+
+</html>

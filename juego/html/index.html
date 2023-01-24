@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infame Pong</title>
+    <style>
+        body {
+            font-family: monospace;
+            font-size: large;
+        }
+    </style>
+</head>
+<body>
+    <h1>Infame pong</h1>
+
+    <p>Para acceder a una partida ya iniciada debes conocer la URL. De lo contrario inicia una nueva partida y comparte la URL para jugar con otra persona.</p>
+    <button id="nueva-partida">Nueva partida partida</button>
+    <script>
+        document.querySelector("#nueva-partida").addEventListener("click", ()=>{
+            window.location = "/partida/" + Date.now() 
+        })
+    </script>
+</body>
+</html>
